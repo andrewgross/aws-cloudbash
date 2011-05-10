@@ -1,0 +1,10 @@
+AWS-CLOUDBASH README
+
+This project is a collection of scripts I have created for managing AWS resources, primarily EC2 and VPC, from the command line.
+
+These scripts assume that you have the latest AWS Command Line Tools in your path and the EC2_CERT and EC2_PRIVATE_KEY variables defined.  Make sure that these files are never published.  They have the ability to control nearly all of your Amazon Web Services deployments.  For example, DO NOT check them into your git project on Github, they should be managed seperately.
+
+These scripts have been tested and are expected to be run from a bash shell and I have tried to reflect that in the file headers.
+
+This repository intended for public use so feel free to post comments, requests or pull requests.
+
