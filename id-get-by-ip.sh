@@ -41,6 +41,8 @@ valid_ip()
 }
 
 
+# Checks the Instance ID passed in to be of the valid format of 8 hex digits
+
 check_instance_id()
 {
 
