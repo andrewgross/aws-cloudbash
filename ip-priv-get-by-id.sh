@@ -77,7 +77,7 @@ do
         ;;
     i)
         # Set Instance ID passed in
-        INSTANCE_ID=$1
+        INSTANCE_ID=$OPTARG
         check_instance_id $INSTANCE_ID
         if [[ $? == 1 ]]
         then
