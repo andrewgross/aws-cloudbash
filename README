@@ -6,5 +6,5 @@ These scripts assume that you have the latest AWS Command Line Tools in your pat
 
 These scripts have been tested and are expected to be run from a bash shell and I have tried to reflect that in the file headers.
 
-This repository intended for public use so feel free to post comments, requests or pull requests.
+This repository is intended for public use so feel free to post comments, requests or pull requests.
 
