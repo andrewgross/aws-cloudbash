@@ -35,7 +35,7 @@ check_instance_id()
             return 0
             ;;
         * )
-            exit 1
+            return 1
             ;;
     esac
 
@@ -62,8 +62,11 @@ valid_ip()
     return $stat
 }
 
+# Does a lookup of the IP via nslookup.  Since we are in bash we should be able to assume that this function exists.
+# If we aren't in bash, and in say, cygwin, hope you have nslookup installed. Also, get out while you still can.
 
-get_ip_by_nslookup(){
+get_ip_by_nslookup()
+{
 
     local SERVER_NAME=$1
 
@@ -81,11 +84,15 @@ get_ip_by_nslookup(){
 
 }
 
-get_ip_by_hosts_file(){
+# Checks your local host file for an explicit reference to the name given then snatches the IP.  The IP is then passed
+# around gratuitously to other functions to get the instance_id.
+
+get_ip_by_hosts_file()
+{
 
     local SERVER_NAME=$1
 
-    INSTANCE_IP=$(cat /etc/hosts | grep -w $SERVER_NAME | awk '{print $1}')
+    INSTANCE_IP=$(cat /etc/hosts | grep -i -w $SERVER_NAME | awk '{print $1}')
 
     valid_ip $INSTANCE_IP
 
@@ -99,32 +106,14 @@ get_ip_by_hosts_file(){
 
 }
 
-get_id_by_tag(){
+# Get the information from Amazon about your instances, parse the results for the TAG field with the Key 'Name',
+# return the instance ID associated with the
+
+get_id_by_server_name(){
 
     local SERVER_NAME=$1
 
-    INSTANCE_ID=$(ec2-describe-instances | grep -B1 TAG | grep Name | grep -i -w ut1 | awk '{print $3}')
-
-}
-
-
-
-## TODO Implement getopts, implement flow for different options
-## handle function exit codes
-## Implement get_id_by_ip calls
-
-
-
-valid_ip $INSTANCE_IP
-
-case $? in
-    0 )
-        echo $(./id-get-by-ip.sh -i $INSTANCE_IP)
-         ;;
-    * )
-         ;;
-esac
-
+    INSTANCE_ID=$(ec2-describe-instances | grep -B1 TAG | grep Name | grep -i -w $SERVER_NAME | awk '{print $3}')
 
     check_instance_id $INSTANCE_ID
 
@@ -135,3 +124,75 @@ esac
     fi
 
     return 1
+
+}
+
+
+while getopts “hn:” OPTION
+do
+    case $OPTION in
+    h)
+        # Show help information
+        usage
+        exit 1
+        ;;
+    n)
+        # Set Name passed in
+        SERVER_NAME=$OPTARG
+        ;;
+    ?)
+        # Handle uncaught parameters
+        usage
+        exit 1
+        ;;
+    esac
+done
+
+
+# Try all 3 methods, return the first plausible result.  It may be better to try all 3 and compare, but for now
+# I will stick with simplicity and slight speed improvements (API calls are expensive!)
+# Of course, this assumes your DNS, /etc/hosts and EC2 Naming conventions are all in sync.  They are all in sync, right?
+
+NS_LOOKUP__METHOD=$(get_ip_by_nslookup $SERVER_NAME)
+if [[ $? == 0 ]]
+then
+    NS_LOOKUP__METHOD=$(./id-get-by-ip.sh -i $NS_LOOKUP__METHOD)
+fi
+
+check_instance_id $NS_LOOKUP__METHOD
+
+if [[ $? == 0 ]]
+then
+    echo $NS_LOOKUP__METHOD
+    exit 0
+fi
+
+HOST_FILE_METHOD=$(get_ip_by_hosts_file $SERVER_NAME)
+if [[ $? == 0 ]]
+then
+    HOST_FILE_METHOD=$(./id-get-by-ip.sh -i $HOST_FILE_METHOD)
+fi
+
+check_instance_id $HOST_FILE_METHOD
+
+if [[ $? == 0 ]]
+then
+    echo $HOST_FILE_METHOD
+    exit 0
+fi
+
+TAG_METHOD=$(get_id_by_server_name $SERVER_NAME)
+
+check_instance_id $TAG_METHOD
+
+if [[ $? == 0 ]]
+then
+    echo $TAG_METHOD
+    exit 0
+fi
+
+exit 1
+
+
+
+
