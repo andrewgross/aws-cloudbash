@@ -8,16 +8,14 @@
 
 usage()
 {
-cat << EOF
+echo "\
 usage: $0 options
 
 This script adds takes the instance ID of an AWS Instance and returns the private IP address
 
 OPTIONS:
    -h      Show this message
-   -i      Instance ID      Ex: i-1234abcd
-
-EOF
+   -i      Instance ID      Ex: i-1234abcd " >&2
 }
 
 # Checks the Instance ID passed in to be of the valid format of 8 hex digits
@@ -32,6 +30,7 @@ check_instance_id()
             return 0
             ;;
         * )
+            echo "[ERROR]Invalid Instance ID format" >&2
             exit 1
             ;;
     esac
@@ -81,7 +80,6 @@ do
         check_instance_id $INSTANCE_ID
         if [[ $? == 1 ]]
         then
-            echo "Invalid Instance ID format"
             usage
             exit 1
         fi
